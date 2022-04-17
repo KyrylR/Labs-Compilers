@@ -59,10 +59,10 @@ int error_occurred();
 DARROW          =>
 LE              <=
 ASSIGN          <-
-DIGIT           [:digit:]
+DIGIT           [0-9]
 WHITESPACE		[ \n\f\r\t\v]
-TYPEID          [:upper:]([:alpha:]|{DIGIT}|_)*
-OBJECTID        [:lower:]([:alpha:]|{DIGIT}|_)*
+TYPEID          [A-Z]([a-zA-Z]|{DIGIT}|_)*
+OBJECTID        [a-z]([a-zA-Z]|{DIGIT}|_)*
 CHARS           [-+*/~<=(){};:,.@]
 
 %x COMMENT STRING STR_ERROR
@@ -167,7 +167,7 @@ t[rR][uU][eE]	                    { cool_yylval.boolean=true; return (BOOL_CONST
 
  /*
   *  String constants (C syntax)
-  *  Escape sequence \c is accepted for all characters c. Except for 
+  *  Escape sequence \c is accepted for all characters c. Except for
   *  \n \t \b \f, the result is c.
   *
   */
