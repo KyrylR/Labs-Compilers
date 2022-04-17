@@ -43,6 +43,8 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
 
+// Counter for nested comments
+int nested_comment_counter=0;
 %}
 
 /*
@@ -52,10 +54,12 @@ extern YYSTYPE cool_yylval;
 DARROW          =>
 LE              <=
 ASSIGN          <-
-DIGIT           [0-9]
-WHITESPACE		[ \n\f\r\t\v]
-TYPEID          {[A-Z]}({[a-zA-Z]}|{DIGIT}|_)*
-OBJECTID        {[a-z]}({[a-zA-Z]}|{DIGIT}|_)*
+DIGIT           [:digit:]
+WHITESPACE		[:space:]
+TYPEID          {[:upper:]}({[:alpha:]}|{DIGIT}|_)*
+OBJECTID        {[:lower:]}({[:alpha:]}|{DIGIT}|_)*
+
+%x COMMENT
 
 %%
 
@@ -63,6 +67,40 @@ OBJECTID        {[a-z]}({[a-zA-Z]}|{DIGIT}|_)*
   *  Nested comments
   */
 
+--.*		/* eat up one-line comments */
+
+"*)"	{
+		    cool_yylval.error_msg="Unmatched *)";	// *) outside any comment block
+		    return (ERROR);
+		}
+
+"(*"	{
+		    BEGIN(COMMENT);	// Begin condition COMMENT
+		    nested_comment_counter=1;
+		}
+
+<COMMENT>"(*"	{
+				    nested_comment_counter++;
+				}
+
+<COMMENT>"*)"	{
+				    nested_comment_counter--;
+				    if(!nested_comment_counter)
+				         /*	  Equivalent to BEGIN(0): returns to the original state
+                          *   where only the  rules with no start conditions are active.
+                          */
+					    BEGIN(INITIAL);	//comments ends
+				}
+
+<COMMENT>\n		curr_lineno++;
+
+<COMMENT>.		/* eat up everything inside of comment */
+
+<COMMENT><<EOF>>	{
+					    BEGIN(INITIAL);
+					    cool_yylval.error_msg="EOF in comment";
+					    return (ERROR);
+					}
 
  /*
   *  The multiple-character operators.
@@ -116,6 +154,7 @@ t[rR][uU][eE]	                    { cool_yylval.boolean=true; return (BOOL_CONST
 
 {WHITESPACE}          /* eat up whitespace */
 
+// For Debug
 .           printf("Unrecognized character: %s\n", yytext);
 
 
