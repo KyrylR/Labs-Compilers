@@ -56,6 +56,7 @@ int error_occurred();
  * Define names for regular expressions here.
  */
 
+
 DARROW          =>
 LE              <=
 ASSIGN          <-
@@ -184,8 +185,8 @@ t[rR][uU][eE]	                    { cool_yylval.boolean=true; return (BOOL_CONST
 				            BEGIN(INITIAL);
 				            return (ERROR);
 				        }
+				    *string_buf_ptr='\0';	//terminate the formed string
 			        cool_yylval.symbol=stringtable.add_string(string_buf);	//add the string to the STRING table
-			        *string_buf_ptr='\0';	//terminate the formed string
 			        BEGIN(INITIAL);	// end of string state
 			        return (STR_CONST);
 			    }
