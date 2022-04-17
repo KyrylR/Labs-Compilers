@@ -34,7 +34,7 @@ extern FILE *fin; /* we read from this file */
 char string_buf[MAX_STR_CONST]; /* to assemble string constants */
 char *string_buf_ptr;
 
-extern int curr_lineno;
+extern int curr_lineno; // line number
 extern int verbose_flag;
 
 extern YYSTYPE cool_yylval;
@@ -45,6 +45,11 @@ extern YYSTYPE cool_yylval;
 
 // Counter for nested comments
 int nested_comment_counter=0;
+
+// Handle String too long error
+void add_char(char c);
+int error_occurred();
+
 %}
 
 /*
@@ -55,11 +60,12 @@ DARROW          =>
 LE              <=
 ASSIGN          <-
 DIGIT           [:digit:]
-WHITESPACE		[:space:]
-TYPEID          {[:upper:]}({[:alpha:]}|{DIGIT}|_)*
-OBJECTID        {[:lower:]}({[:alpha:]}|{DIGIT}|_)*
+WHITESPACE		[ \n\f\r\t\v]
+TYPEID          [:upper:]([:alpha:]|{DIGIT}|_)*
+OBJECTID        [:lower:]([:alpha:]|{DIGIT}|_)*
+CHARS           [-+*/~<=(){};:,.@]
 
-%x COMMENT
+%x COMMENT STRING STR_ERROR
 
 %%
 
@@ -70,7 +76,7 @@ OBJECTID        {[:lower:]}({[:alpha:]}|{DIGIT}|_)*
 --.*		/* eat up one-line comments */
 
 "*)"	{
-		    cool_yylval.error_msg="Unmatched *)";	// *) outside any comment block
+		    cool_yylval.error_msg="Unmatched *)";
 		    return (ERROR);
 		}
 
@@ -89,7 +95,7 @@ OBJECTID        {[:lower:]}({[:alpha:]}|{DIGIT}|_)*
 				         /*	  Equivalent to BEGIN(0): returns to the original state
                           *   where only the  rules with no start conditions are active.
                           */
-					    BEGIN(INITIAL);	//comments ends
+					    BEGIN(INITIAL);
 				}
 
 <COMMENT>\n		curr_lineno++;
@@ -138,24 +144,167 @@ t[rR][uU][eE]	                    { cool_yylval.boolean=true; return (BOOL_CONST
 
 
  /*
+  * Integer constants.
+  */
+{DIGIT}+    {
+                cool_yylval.symbol=inttable.add_string(yytext);
+                return (INT_CONST); // token from cool-parse.h yytokentype
+            }
+
+ /*
+  *  TypeID and ObjectID.
+  */
+
+{TYPEID}	{
+			    cool_yylval.symbol=idtable.add_string(yytext);
+			    return (TYPEID);
+			}
+
+{OBJECTID}	{
+			    cool_yylval.symbol=idtable.add_string(yytext);
+			    return (OBJECTID);
+			}
+
+ /*
   *  String constants (C syntax)
   *  Escape sequence \c is accepted for all characters c. Except for 
   *  \n \t \b \f, the result is c.
   *
   */
 
+\"	            {
+	                BEGIN(STRING);	// Begin condition STRING
+	                string_buf_ptr=string_buf;	// reset string_buf_ptr
+	            }
 
-{DIGIT}+    {
-                cool_yylval.symbol=inttable.add_string(yytext);
-                return (INT_CONST); // token from cool-parse.h yytokentype
-            }
+<STRING>\"	    {
+			        if(string_buf_ptr - string_buf >= MAX_STR_CONST)
+				        {
+				            cool_yylval.error_msg="String constant too long";
+				            BEGIN(INITIAL);
+				            return (ERROR);
+				        }
+			        cool_yylval.symbol=stringtable.add_string(string_buf);	//add the string to the STRING table
+			        *string_buf_ptr='\0';	//terminate the formed string
+			        BEGIN(INITIAL);	// end of string state
+			        return (STR_CONST);
+			    }
+
+ /*
+  * an unescaped newline
+  */
+<STRING>\n	    {
+			        cool_yylval.error_msg="Unterminated string constant";
+			        curr_lineno++;
+			        BEGIN(INITIAL);
+			        return (ERROR);
+			    }
+
+<STRING>\\n	    {
+			        add_char('\n');
+			    }
+
+<STRING>\\\n	{
+				    curr_lineno++;
+				    add_char('\n');
+				}
+
+<STRING>\\t	    {
+			        add_char('\t');
+			    }
+
+<STRING>\\b	    {
+			        add_char('\b');
+			    }
+
+<STRING>\\f	    {
+			        add_char('\f');
+			    }
 
 
+ /*
+  * Handle null character error
+  */
+<STRING>\\\0	{
+				    BEGIN(STR_ERROR);
+				    cool_yylval.error_msg="String contains escaped null character.";
+				    return (ERROR);
+				}
+
+
+<STRING>\0	    {
+			        BEGIN(STR_ERROR);
+			        cool_yylval.error_msg="String contains null character.";
+			        return (ERROR);
+			    }
+
+ /*
+  * Handle all other escaped character.
+  */
+<STRING>\\(.|\n)	{
+				        add_char(yytext[1]);	// add char after backslash
+				    }
+
+
+<STRING><<EOF>>	    {
+				        BEGIN(INITIAL);
+				        cool_yylval.error_msg="EOF in string constant";
+				        return (ERROR);
+				    }
+
+ /*
+  * Handle all other character.
+  */
+<STRING>.	        {
+			            add_char(yytext[0]);
+			        }
+
+ /*
+  * Character string is ignored when the string is long or the character is invalid
+  */
+<STR_ERROR>\n	    {
+                        curr_lineno++;
+                        BEGIN(INITIAL);
+                    }
+
+<STR_ERROR>\\\n	     curr_lineno++;
+
+<STR_ERROR>\\\"
+
+<STR_ERROR>\\\\
+
+<STR_ERROR>\"	     BEGIN(INITIAL);
+
+<STR_ERROR>.
+
+\n	 curr_lineno++; // count newline
+
+{CHARS}	            {
+					    return yytext[0]; // return matched char
+					}
 
 {WHITESPACE}          /* eat up whitespace */
 
-// For Debug
-.           printf("Unrecognized character: %s\n", yytext);
+ /*
+  *  To any other symbol that is not covered by the rules
+  */
+.       {
+    	    cool_yylval.error_msg=yytext;
+    	    return (ERROR);
+    	}
 
 
 %%
+
+void add_char(char c) {
+    if(string_buf_ptr - string_buf >= MAX_STR_CONST)
+		error_occurred();
+
+	*string_buf_ptr++=c;
+}
+
+int error_occurred() {
+     cool_yylval.error_msg="String constant too long";
+     BEGIN(STR_ERROR);
+     return (ERROR);
+}
