@@ -50,8 +50,12 @@ extern YYSTYPE cool_yylval;
  */
 
 DARROW          =>
+LE              <=
+ASSIGN          <-
 DIGIT           [0-9]
-ID              [a-z][a-z0-9]*
+WHITESPACE		[ \n\f\r\t\v]
+TYPEID          {[A-Z]}({[a-zA-Z]}|{DIGIT}|_)*
+OBJECTID        {[a-z]}({[a-zA-Z]}|{DIGIT}|_)*
 
 %%
 
@@ -63,12 +67,36 @@ ID              [a-z][a-z0-9]*
  /*
   *  The multiple-character operators.
   */
+
 {DARROW}		{ return (DARROW); }
+{LE}			{ return (LE); }
+{ASSIGN}		{ return (ASSIGN); }
+
 
  /*
   * Keywords are case-insensitive except for the values true and false,
   * which must begin with a lower-case letter.
   */
+
+[cC][lL][aA][sS][sS]	            { return (CLASS); }
+[eE][lL][sS][eE]	                { return (ELSE); }
+f[aA][lL][sS][eE]	                { cool_yylval.boolean=false; return (BOOL_CONST); }
+[fF][iI]	                        { return (FI); }
+[iI][fF]	                        { return (IF); }
+[iI][nN]	                        { return (IN); }
+[iI][nN][hH][eE][rR][iI][tT][sS]	{ return (INHERITS); }
+[iI][sS][vV][oO][iI][dD]	        { return (ISVOID); }
+[lL][eE][tT]	                    { return (LET); }
+[lL][oO][oO][pP]	                { return (LOOP); }
+[pP][oO][oO][lL]	                { return (POOL); }
+[tT][hH][eE][nN]	                { return {THEN}; }
+[wW][hH][iI][lL][eE]	            { return (WHILE); }
+[cC][aA][sS][eE]	                { return (CASE); }
+[eE][sS][aA][cC]	                { return (ESAC); }
+[nN][eE][wW]	                    { return (NEW); }
+[oO][fF]	                        { return (OF); }
+[nN][oO][tT]	                    { return (NOT); }
+t[rR][uU][eE]	                    { cool_yylval.boolean=true; return (BOOL_CONST); }
 
 
  /*
@@ -80,29 +108,15 @@ ID              [a-z][a-z0-9]*
 
 
 {DIGIT}+    {
-                     printf( "An integer: %s (%d)\n", yytext,
-                             atoi( yytext ) );
+                cool_yylval.symbol=inttable.add_string(yytext);
+                return (INT_CONST); // token from cool-parse.h yytokentype
+            }
 
-                     }
 
-{DIGIT}+"."{DIGIT}*        {
-                     printf( "A float: %s (%g)\n", yytext,
-                             atof( yytext ) );
-                     }
 
-         if|then|begin|end|class|function        {
-                     printf( "A keyword: %s\n", yytext );
-                     }
+{WHITESPACE}          /* eat up whitespace */
 
-         {ID}        printf( "An identifier: %s\n", yytext );
-
-         "+"|"-"|"*"|"/"   printf( "An operator: %s\n", yytext );
-
-         "{"[^}\n]*"}"     /* eat up one-line comments */
-
-         [ \t\n]+          /* eat up whitespace */
-
-         .           printf( "Unrecognized character: %s\n", yytext );
+.           printf("Unrecognized character: %s\n", yytext);
 
 
 %%
