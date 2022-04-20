@@ -60,15 +60,16 @@ int error_occurred();
 DARROW          =>
 LE              <=
 ASSIGN          <-
-DIGIT           [0-9]
-WHITESPACE		[ \n\f\r\t\v]
-TYPEID          [A-Z]([a-zA-Z]|{DIGIT}|_)*
-OBJECTID        [a-z]([a-zA-Z]|{DIGIT}|_)*
+DIGIT           [[:digit:]]
+WHITESPACE		[[:space:]]
+TYPEID          [[:upper:]]([[:alpha:]]|{DIGIT}|_)*
+OBJECTID        [[:lower:]]([[:alpha:]]|{DIGIT}|_)*
 CHARS           [-+*/~<=(){};:,.@]
 
 %x COMMENT STRING STR_ERROR
 
 %%
+
 
  /*
   *  Nested comments
@@ -94,7 +95,7 @@ CHARS           [-+*/~<=(){};:,.@]
 				    nested_comment_counter--;
 				    if(!nested_comment_counter)
 				         /*	  Equivalent to BEGIN(0): returns to the original state
-                          *   where only the  rules with no start conditions are active.
+                          *   where only the rules with no start conditions are active.
                           */
 					    BEGIN(INITIAL);
 				}
@@ -293,7 +294,6 @@ t[rR][uU][eE]	                    { cool_yylval.boolean=true; return (BOOL_CONST
     	    cool_yylval.error_msg=yytext;
     	    return (ERROR);
     	}
-
 
 %%
 
