@@ -114,6 +114,7 @@
     problems (bison 1.25 and earlier start at 258, later versions -- at
     257)
     */
+
     %token CLASS 258 ELSE 259 FI 260 IF 261 IN 262
     %token INHERITS 263 LET 264 LOOP 265 POOL 266 THEN 267 WHILE 268
     %token CASE 269 ESAC 270 OF 271 DARROW 272 NEW 273 ISVOID 274
@@ -134,7 +135,7 @@
     %type <classes> class_list
     %type <class_> class
 
-    /* You will want to change the following line. */
+    /* Declare feature(s), formal(s), expression(s), case(s) */
     %type <features> feature_list
     %type <feature> feature
     %type <formals> formal_list formal_list_multi
@@ -144,7 +145,8 @@
     %type <case_> case
     %type <cases> case_list
 
-    /* Precedence declarations go here. */
+    /* Precedence.
+     href: https://courses.edx.org/assets/courseware/v1/27e1a38f1161e61d91c25a4b1805489b/asset-v1:StanfordOnline+SOE.YCSCS1+3T2020+type@asset+block/cool_manual.pdf */
     %nonassoc IN
     %right ASSIGN
     %nonassoc NOT
@@ -157,6 +159,9 @@
     %left '.'
 
     %%
+
+    /*  This was used as the main resource:
+    https://courses.edx.org/assets/courseware/v1/115f9c1f48cffa3192f23dc37c3a4eee/asset-v1:StanfordOnline+SOE.YCSCS1+3T2020+type@asset+block/cool-tour.pdf*/
 
     /* Save the root of the abstract syntax tree in a global variable. */
     program:
