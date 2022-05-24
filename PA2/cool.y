@@ -259,9 +259,9 @@
     | expr_list expr ';'
     { $$ = append_Expressions($1, single_Expressions($2)); }
     | expr_list error ';'
-    { $$=$1; }
+    { $$ = $1; }
     | error ';'
-    { $$=nil_Expressions(); }
+    { $$ = nil_Expressions(); }
     ;
 
     /* ---- Let list ---- */
