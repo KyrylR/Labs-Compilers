@@ -8,7 +8,11 @@ generator. (The C++ tool is called flex; the Java tool is called jlex.) You will
 for Cool in an appropriate input format, and the analyzer generator will generate the actual code (C++
 or Java) for recognizing tokens in Cool programs.
 
+**WARNING. The cool.flex constants are heavily interrelated with cool-parse.h**
+
 ### Useful Links to PA1:
+
+[My notes here frome lectures](https://github.com/KyrylR/Compilers-Lectures)
 
 [Character representation in regular expressions](https://uk.wikipedia.org/wiki/%D0%9F%D1%80%D0%B5%D0%B4%D1%81%D1%82%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%BD%D1%8F_%D1%81%D0%B8%D0%BC%D0%B2%D0%BE%D0%BB%D1%96%D0%B2_%D1%83_%D1%80%D0%B5%D0%B3%D1%83%D0%BB%D1%8F%D1%80%D0%BD%D0%B8%D1%85_%D0%B2%D0%B8%D1%80%D0%B0%D0%B7%D0%B0%D1%85)
 
