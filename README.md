@@ -18,6 +18,8 @@ or Java) for recognizing tokens in Cool programs.
 
 [This manual describes flex](https://web.stanford.edu/class/archive/cs/cs143/cs143.1112/materials/other/manflex.html)
 
+## Certificate
+
 [SOE.YCSCS1: Compilers edX Verified Certificate](https://courses.edx.org/certificates/59e85e4665be445bae7f0bee23c99750)
 
 ## Authors
