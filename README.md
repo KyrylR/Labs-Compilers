@@ -38,7 +38,6 @@ this and future assignments.
 There is a lot of information in this handout, and you need to know most of it to write a working
 parser. Please read the handout thoroughly
 
-**WARNING. The cool.flex constants are heavily interrelated with cool-parse.h**
 
 ### Useful Links to PA2:
 
