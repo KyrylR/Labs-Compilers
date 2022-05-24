@@ -137,7 +137,7 @@
     /* You will want to change the following line. */
     %type <features> feature_list
     %type <feature> feature
-    %type <formals> formal_list formal_list2
+    %type <formals> formal_list formal_list_multi
     %type <formal> formal
     %type <expressions> expr_actuals expr_actuals_list expr_list
     %type <expression> expr let_list
@@ -165,24 +165,59 @@
 
     class_list
     : class			/* single class */
-    { $$ = single_Classes($1);
-    parse_results = $$; }
+    { $$ = single_Classes($1); parse_results = $$; }
     | class_list class	/* several classes */
-    { $$ = append_Classes($1,single_Classes($2));
-    parse_results = $$; }
+    { $$ = append_Classes($1, single_Classes($2)); parse_results = $$; }
+    | class_list error ';'
+    { $$ = $1; parse_results = $$; }
+    | error ';'
+    { $$ = nil_Classes(); parse_results = $$; }
     ;
 
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' dummy_feature_list '}' ';'
-    { $$ = class_($2,idtable.add_string("Object"),$4,
-    stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
-    { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
+    class	: CLASS TYPEID '{' feature_list '}' ';'
+    { $$ = class_($2, idtable.add_string("Object"), $4, stringtable.add_string(curr_filename)); }
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
+    { $$ = class_($2, $4, $6, stringtable.add_string(curr_filename)); }
     ;
 
     /* Feature list may be empty, but no empty features in list. */
-    dummy_feature_list:		/* empty */
-    {  $$ = nil_Features(); }
+    feature_list:		/* empty */
+    { $$ = nil_Features(); }
+    | feature_list feature ';'
+    { $$ = append_Features($1, single_Features($2)); }
+    | feature_list error ';'
+    { $$ = $1; }
+    ;
+
+    feature: OBJECTID '(' formal_list ')' ':' TYPEID '{' expr '}'
+    { $$ = method($1, $3, $6, $8); }
+    | OBJECTID ':' TYPEID
+    { $$ = attr($1, $3, no_expr());	}
+    | OBJECTID ':' TYPEID ASSIGN expr
+    { $$ = attr($1, $3, $5); }
+    
+    
+    /* Definition of list of formals (method parameters) */
+    formal_list:	/* empty */
+    { $$=nil_Formals(); }
+    | formal
+    { $$=single_Formals($1); }
+    | formal_list_multi formal
+    { $$=append_Formals($1, single_Formals($2)); }
+    ;
+    
+    /* Definition of formal_list_multi (more than one formals) */
+    formal_list_multi: formal ','
+    { $$=single_Formals($1); }
+    | formal_list_multi formal ','
+    { $$=append_Formals($1, single_Formals($2)); }
+    ;
+    
+    /* Definition of a formal */
+    formal: OBJECTID ':' TYPEID
+    { $$=formal($1, $3); }
+    ;
 
 
     /* end of grammar */
