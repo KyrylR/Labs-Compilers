@@ -147,7 +147,6 @@
 
     /* Precedence.
      href: https://courses.edx.org/assets/courseware/v1/27e1a38f1161e61d91c25a4b1805489b/asset-v1:StanfordOnline+SOE.YCSCS1+3T2020+type@asset+block/cool_manual.pdf */
-    %nonassoc IN
     %right ASSIGN
     %nonassoc NOT
     %nonassoc '<' LE '='
